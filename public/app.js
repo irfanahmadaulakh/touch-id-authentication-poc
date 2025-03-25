@@ -1,6 +1,6 @@
 async function signUp() {
   try {
-    const response = await fetch("/register-challenge");
+    const response = await fetch("/api/register-challenge");
     const { challenge, userId } = await response.json();
 
     const credential = await navigator.credentials.create({
@@ -19,7 +19,7 @@ async function signUp() {
       },
     });
 
-    await fetch("/register", {
+    await fetch("/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -36,7 +36,7 @@ async function signUp() {
 
 async function login() {
   try {
-    const response = await fetch("/auth-challenge");
+    const response = await fetch("/api/auth-challenge");
     const { challenge } = await response.json();
 
     const credential = await navigator.credentials.get({
@@ -47,7 +47,7 @@ async function login() {
       },
     });
 
-    const verifyResponse = await fetch("/authenticate", {
+    const verifyResponse = await fetch("/api/authenticate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
