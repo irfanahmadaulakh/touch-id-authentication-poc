@@ -1,45 +1,66 @@
 const express = require("express");
+const session = require("express-session");
 const cors = require("cors");
 const crypto = require("crypto");
+
 const app = express();
+
 app.use(express.static("public"));
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
-let userCredentials = {}; // Temporary storage
+app.use(
+  session({
+    secret: "super-secret",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: "lax",
+    },
+  })
+);
 
-// Generate a random challenge for registration
+let userCredentials = {};
+
 app.get("/register-challenge", (req, res) => {
   const challenge = crypto.randomBytes(32);
   const userId = crypto.randomBytes(16);
-  res.json({
-    challenge: challenge.toJSON().data,
-    userId: userId.toJSON().data,
-  });
+  res.json({ challenge: [...challenge], userId: [...userId] });
 });
 
-// Store credentials on signup
 app.post("/register", (req, res) => {
   userCredentials = req.body.credential;
+  req.session.isBiometricEnabled = true;
   res.json({ success: true });
 });
 
-// Generate challenge for authentication
 app.get("/auth-challenge", (req, res) => {
   const challenge = crypto.randomBytes(32);
-  res.json({ challenge: challenge.toJSON().data });
+  res.json({ challenge: [...challenge] });
 });
 
-// Verify authentication
 app.post("/authenticate", (req, res) => {
   if (userCredentials) {
+    req.session.loggedIn = true;
     res.json({ success: true });
   } else {
-    res.status(401).json({ error: "Invalid credentials" });
+    res.status(401).json({ error: "Authentication failed" });
   }
 });
 
-// Start the server
+app.get("/session-status", (req, res) => {
+  res.json({
+    loggedIn: req.session.loggedIn || false,
+    biometricEnabled: req.session.isBiometricEnabled || false,
+  });
+});
+
 app.listen(3000, () => {
   console.log("Server running at http://localhost:3000");
 });

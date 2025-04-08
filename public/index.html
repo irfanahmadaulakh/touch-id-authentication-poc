@@ -1,15 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebAuthn Authentication</title>
-    <script defer src="app.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Touch ID Login</title>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="app.js"></script>
 </head>
 <body>
-    <h2>Touch ID & Face ID Authentication</h2>
-    <button onclick="signUp()">Sign Up with Touch/Face ID</button>
-    <button onclick="login()">Login with Touch/Face ID</button>
-    <p id="status"></p>
+  <header>My Account</header>
+
+  <div class="container">
+    <div class="login-box">
+      <h3>Sign-in Here</h3>
+      <input type="text" id="username" placeholder="Username" />
+      <input type="password" id="password" placeholder="Password" />
+      <button onclick="handleLogin()">Login</button>
+      <p id="status"></p>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="savePrompt" class="modal hidden">
+    <div class="modal-content">
+      <p>Would you like to enable biometric sign-in for next time?</p>
+      <button onclick="saveBiometric()">Yes</button>
+      <button onclick="closePrompt()">No</button>
+    </div>
+  </div>
+
+  <footer>&copy; 2025 Focus Broadband. All rights reserved</footer>
+
 </body>
 </html>
