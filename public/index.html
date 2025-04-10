@@ -21,13 +21,17 @@
   </div>
 
   <!-- Modal -->
-  <div id="savePrompt" class="modal hidden">
-    <div class="modal-content">
-      <p>Would you like to enable biometric sign-in for next time?</p>
-      <button onclick="saveBiometric()">Yes</button>
-      <button onclick="closePrompt()">No</button>
-    </div>
+  <!-- Biometric Modal -->
+<div id="savePrompt" class="modal hidden">
+  <div class="modal-content">
+    <img src="https://img.icons8.com/ios-filled/100/fingerprint.png" alt="Fingerprint Icon" class="bio-icon" />
+    <h4>Enable Biometric Sign-In</h4>
+    <p>Touch ID or Face ID makes signing in quicker, easier, and more secure. You won't have to type your password every time!</p>
+    <button onclick="saveBiometric()">Enable</button>
+    <button class="cancel-btn" onclick="closePrompt()">Cancel</button>
   </div>
+</div>
+
 
   <footer>&copy; 2025 Focus Broadband. All rights reserved</footer>
 
