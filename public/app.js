@@ -13,15 +13,24 @@ async function handleLogin() {
   }
 }
 
+// function saveBiometric() {
+//   // Set a cookie to store biometric login enabled
+//   document.cookie =
+//     "biometricLogin=true; path=/; max-age=" + 60 * 60 * 24 * 365; // 1 year cookie
+//   document.getElementById("savePrompt").classList.add("hidden");
+
+//   // Proceed to trigger biometric authentication
+//   triggerBiometricAuthentication();
+// }
 function saveBiometric() {
-  // Set a cookie to store biometric login enabled
   document.cookie =
-    "biometricLogin=true; path=/; max-age=" + 60 * 60 * 24 * 365; // 1 year cookie
+    "biometricLogin=true; path=/; max-age=" + 60 * 60 * 24 * 365;
+
   document.getElementById("savePrompt").classList.add("hidden");
 
-  // Proceed to trigger biometric authentication
-  triggerBiometricAuthentication();
+  registerBiometricCredential(); // <-- Register the biometric credential
 }
+
 // function saveBiometric() {
 //   // Simulate storing a credential ID (normally you'd get this from WebAuthn registration)
 //   const fakeCredentialId = new Uint8Array(16);
@@ -43,46 +52,67 @@ function closePrompt() {
   document.getElementById("savePrompt").classList.add("hidden");
 }
 
-function triggerBiometricAuthentication() {
-  if (navigator.credentials && navigator.credentials.get) {
-    navigator.credentials
-      .get({
-        publicKey: {
-          challenge: new Uint8Array(32), // Placeholder for challenge, you should generate a real one
-          timeout: 60000,
-        },
-      })
-      .then((credential) => {
-        document.getElementById("status").innerText =
-          "Biometric authentication successful!";
-      })
-      .catch((err) => {
-        document.getElementById("status").innerText =
-          "Biometric authentication failed!";
-      });
-  } else {
-    document.getElementById("status").innerText =
-      "Biometric authentication is not supported.";
+async function registerBiometricCredential() {
+  const publicKey = {
+    challenge: new Uint8Array(32), // Normally from server
+    rp: {
+      name: "Focus Broadband App",
+    },
+    user: {
+      id: new Uint8Array(16), // Should be a unique user ID
+      name: "user@focus.com",
+      displayName: "Focus User",
+    },
+    pubKeyCredParams: [
+      {
+        type: "public-key",
+        alg: -7, // ES256 algorithm
+      },
+    ],
+    authenticatorSelection: {
+      authenticatorAttachment: "platform", // Use device biometrics
+      userVerification: "preferred",
+    },
+    timeout: 60000,
+    attestation: "none",
+  };
+
+  try {
+    const credential = await navigator.credentials.create({ publicKey });
+
+    // Save credential ID to localStorage for reuse
+    if (credential && credential.rawId) {
+      localStorage.setItem(
+        "credentialId",
+        arrayBufferToBase64(credential.rawId)
+      );
+      console.log("Credential registered and saved.");
+    }
+  } catch (err) {
+    console.error("Credential registration failed:", err);
   }
 }
+
+function arrayBufferToBase64(buffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+}
+
+function base64ToArrayBuffer(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
 // function triggerBiometricAuthentication() {
-//   const storedId = localStorage.getItem("credentialId");
-
-//   if (navigator.credentials && navigator.credentials.get && storedId) {
-//     const idBytes = Uint8Array.from(atob(storedId), (c) => c.charCodeAt(0));
-
+//   if (navigator.credentials && navigator.credentials.get) {
 //     navigator.credentials
 //       .get({
 //         publicKey: {
-//           challenge: new Uint8Array(32), // Simulated challenge (use real one from server in production)
+//           challenge: new Uint8Array(32), // Placeholder for challenge, you should generate a real one
 //           timeout: 60000,
-//           allowCredentials: [
-//             {
-//               type: "public-key",
-//               id: idBytes,
-//               transports: ["internal"], // Optional: limits to built-in biometrics
-//             },
-//           ],
 //         },
 //       })
 //       .then((credential) => {
@@ -95,7 +125,72 @@ function triggerBiometricAuthentication() {
 //       });
 //   } else {
 //     document.getElementById("status").innerText =
-//       "Biometric authentication is not supported or credential not found.";
+//       "Biometric authentication is not supported.";
+//   }
+// }
+
+function triggerBiometricAuthentication() {
+  const storedId = localStorage.getItem("credentialId");
+  if (!storedId) {
+    console.log("No stored credential ID found.");
+    return;
+  }
+
+  navigator.credentials
+    .get({
+      publicKey: {
+        challenge: new Uint8Array(32), // Normally from server
+        timeout: 60000,
+        allowCredentials: [
+          {
+            type: "public-key",
+            id: base64ToArrayBuffer(storedId),
+            transports: ["internal"],
+          },
+        ],
+        userVerification: "preferred",
+      },
+    })
+    .then((assertion) => {
+      document.getElementById("status").innerText =
+        "Biometric authentication successful!";
+    })
+    .catch((err) => {
+      console.error("Biometric authentication failed:", err);
+      document.getElementById("status").innerText =
+        "Biometric authentication failed.";
+    });
+}
+
+// function triggerBiometricAuthentication() {
+//   if (navigator.credentials && navigator.credentials.get) {
+//     navigator.credentials
+//       .get({
+//         publicKey: {
+//           challenge: new Uint8Array(32), // Dummy challenge; should ideally come from your server
+//           timeout: 60000,
+//           allowCredentials: [
+//             {
+//               id: new Uint8Array([1, 2, 3, 4]).buffer, // Placeholder ID (normally you'd store this after registration)
+//               type: "public-key",
+//               transports: ["internal"], // platform authenticator like fingerprint, Face ID
+//             },
+//           ],
+//           userVerification: "preferred",
+//         },
+//       })
+//       .then((credential) => {
+//         document.getElementById("status").innerText =
+//           "Biometric authentication successful!";
+//       })
+//       .catch((err) => {
+//         console.error("Biometric auth error:", err);
+//         document.getElementById("status").innerText =
+//           "Biometric authentication failed!";
+//       });
+//   } else {
+//     document.getElementById("status").innerText =
+//       "Biometric authentication is not supported on this device.";
 //   }
 // }
 
